@@ -63,6 +63,7 @@ input:focus,textarea:focus{outline:0;border-color:var(--a1)}input[type=range]{wi
  <label>Password (6+ characters)</label><input type="password" id="pw" autocomplete="current-password">
  <div id="newbits" hidden><label>Your name</label><input type="text" id="nm"><label>Invite code</label><input type="text" id="code"></div></div>
  <div class="row" style="margin-top:16px"><button class="go" id="signin" style="flex:1">Sign in</button><button id="signup" style="flex:1">New? Join</button></div>
+ <button id="forgot" style="background:none;margin-top:8px;font-size:13px;color:var(--mut)">Forgot password?</button>
 </div></div>
 
 <div class="ov" id="form" hidden><div class="sheet">
@@ -79,6 +80,9 @@ input:focus,textarea:focus{outline:0;border-color:var(--a1)}input[type=range]{wi
  <label>Photo</label><input type="file" id="photo" accept="image/*">
  <div class="row" style="margin-top:16px"><button id="cancel">Cancel</button><button class="go" id="save" style="flex:1">Post check-in</button></div>
 </div></div>
+<div class="ov" id="reset" style="z-index:2500" hidden><div class="sheet" style="border-radius:26px;margin:auto 12px">
+ <h2>Choose a new password</h2><label>New password (6+ characters)</label><input type="password" id="np" autocomplete="new-password">
+ <button class="go" id="setpw" style="width:100%;margin-top:16px">Save new password</button></div></div>
 <div class="ov" id="spotov" hidden><div class="sheet" id="spotsh"></div></div>
 <div id="toast"></div>
 <script>
@@ -138,6 +142,10 @@ $('#signup').onclick=async()=>{if($('#newbits').hidden){$('#newbits').hidden=fal
  const{data,error}=await sb.auth.signUp({email:$('#em').value.trim(),password:$('#pw').value});if(error)return toast(error.message);
  if(!data.session)return toast('Check your email to confirm, then sign in');
  const r=await sb.rpc('join_group',{p_name:$('#nm').value.trim()||'Goujon fan',p_code:$('#code').value.trim()});if(r.error)return toast(r.error.message);enter(data.user)};
+$('#forgot').onclick=async()=>{const em=$('#em').value.trim();if(!em)return toast('Type your email above first');
+ const{error}=await sb.auth.resetPasswordForEmail(em,{redirectTo:location.origin+location.pathname});toast(error?error.message:'If that email is registered, a reset link is on its way')};
+sb.auth.onAuthStateChange(ev=>{if(ev==='PASSWORD_RECOVERY')$('#reset').hidden=false});
+$('#setpw').onclick=async()=>{const{error}=await sb.auth.updateUser({password:$('#np').value});if(error)return toast(error.message);$('#reset').hidden=true;history.replaceState(null,'',location.pathname);toast('Password updated! 🎉')};
 $('#out').onclick=async()=>{await sb.auth.signOut();location.reload()};
 render();
 sb.auth.getSession().then(({data})=>{if(data.session)enter(data.session.user)});
