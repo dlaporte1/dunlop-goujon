@@ -105,7 +105,12 @@ $('#save').onclick=async()=>{const spot=$('#spot').value.trim();if(!spot||!stars
  $('#save').disabled=false};
 $('#spotov').onclick=e=>{if(e.target.id==='spotov')$('#spotov').hidden=true};
 // ---- auth ----
-async function enter(user){me=user.id;$('#auth').hidden=true;$('#add').hidden=$('#out').hidden=false;await load();clearInterval(timer);timer=setInterval(load,30000)}
+async function enter(user){me=user.id;
+ const{data:pr}=await sb.from('profiles').select('id').eq('id',me).maybeSingle();
+ if(!pr){const code=prompt('Almost there! Enter the invite code to join:');if(!code){await sb.auth.signOut();return location.reload()}
+  const nm=prompt('Your name (shown to friends):')||'Goujon fan';
+  const r=await sb.rpc('join_group',{p_name:nm,p_code:code.trim()});if(r.error){toast(r.error.message);await sb.auth.signOut();return}}
+$('#auth').hidden=true;$('#add').hidden=$('#out').hidden=false;await load();clearInterval(timer);timer=setInterval(load,30000)}
 $('#signin').onclick=async()=>{const{data,error}=await sb.auth.signInWithPassword({email:$('#em').value.trim(),password:$('#pw').value});if(error)return toast(error.message);enter(data.user)};
 $('#signup').onclick=async()=>{if($('#newbits').hidden){$('#newbits').hidden=false;return toast('Add your name + invite code')}
  const{data,error}=await sb.auth.signUp({email:$('#em').value.trim(),password:$('#pw').value});if(error)return toast(error.message);
