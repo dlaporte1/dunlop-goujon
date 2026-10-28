@@ -1,94 +1,115 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Dunlop Goujon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <style>
-:root{--bg:#fff8ec;--card:#fff;--ink:#2b1d0e;--mut:#8a7560;--gold:#e8a317;--acc:#b5470f;--line:#f0e2c8}
-@media(prefers-color-scheme:dark){:root{--bg:#1b140c;--card:#2a2016;--ink:#f6ead6;--mut:#b09a80;--line:#3d2f20}}
-*{box-sizing:border-box}html,body{height:100%;margin:0}
-body{background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,sans-serif;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0)}
-header{padding:12px 16px;font-weight:800;font-size:20px;color:var(--acc);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
-header button{font-size:12px;padding:4px 8px}
-main{flex:1;overflow:auto;position:relative}
-#feed{padding:12px;max-width:640px;margin:auto}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:12px;overflow:hidden}
-.card img{width:100%;max-height:300px;object-fit:cover;display:block}
-.card .b{padding:10px 12px}.mut{color:var(--mut);font-size:13px}
-.st{color:var(--gold);letter-spacing:1px}.chip{display:inline-block;background:var(--line);border-radius:99px;padding:1px 8px;font-size:12px;margin:4px 4px 0 0}
+:root{--bg:#fff6e5;--card:#fff;--ink:#3a2412;--mut:#9a8068;--line:#f3e3c3;--a1:#ff8a1f;--a2:#ff3d77;--gold:#ffb400;--sh:0 6px 18px #b9691a22}
+@media(prefers-color-scheme:dark){:root{--bg:#1c130d;--card:#2b1e15;--ink:#fbeedb;--mut:#bba58c;--line:#44321f;--sh:0 6px 18px #0006}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,sans-serif;display:flex;flex-direction:column}
+h1,.fr{font-family:Fredoka,system-ui,sans-serif}
+header{background:linear-gradient(135deg,var(--a1),var(--a2));color:#fff;padding:calc(12px + env(safe-area-inset-top,0px)) 16px 16px;border-radius:0 0 26px 26px;display:flex;align-items:center;gap:10px;box-shadow:var(--sh);z-index:5}
+header h1{margin:0;font-size:24px;line-height:1;flex:1}header small{display:block;font:500 12px system-ui;opacity:.9;margin-top:3px}
+header svg{animation:wob 3s ease-in-out infinite}@keyframes wob{50%{transform:rotate(12deg) scale(1.08)}}
+#out{background:#fff3;color:#fff;border:0;font-size:12px;padding:6px 10px}
+main{flex:1;overflow:auto;position:relative;padding-bottom:110px}
+#feed{padding:16px 14px;max-width:640px;margin:auto}
+.card{background:var(--card);border-radius:22px;margin-bottom:16px;overflow:hidden;box-shadow:var(--sh);animation:up .35s both}@keyframes up{from{opacity:0;transform:translateY(12px)}}
+.card img.ph{width:100%;max-height:320px;object-fit:cover;display:block}
+.b{padding:14px}.top{display:flex;align-items:center;gap:10px}
+.av{width:40px;height:40px;border-radius:50%;color:#fff;font:700 18px Fredoka,sans-serif;display:grid;place-items:center;flex:none}
+.who{flex:1;line-height:1.2}.mut{color:var(--mut);font-size:12px}
+.score{font:700 26px Fredoka,sans-serif;background:linear-gradient(135deg,var(--a1),var(--a2));-webkit-background-clip:text;background-clip:text;color:transparent}.score small{font-size:13px}
+.spot{display:inline-block;background:var(--line);border-radius:99px;padding:3px 10px;font-weight:600;font-size:13px;margin:10px 0 4px}
+.dish{font:600 18px Fredoka,sans-serif}.st{color:var(--gold);font-size:18px;letter-spacing:2px}
+.meters{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+.m span{font-size:11px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.5px}
+.m i{display:block;height:8px;border-radius:9px;background:var(--line);margin-top:4px;position:relative;overflow:hidden}
+.m i:after{content:'';position:absolute;inset:0;width:calc(var(--v)*20%);border-radius:9px;background:linear-gradient(90deg,var(--a1),var(--a2))}
+.note{margin-top:10px;font-style:italic}.del{float:right;background:none;border:0;color:var(--mut);font-size:12px;padding:4px;margin-top:6px}
+.empty{text-align:center;margin-top:50px;color:var(--mut)}.empty b{font:600 20px Fredoka;color:var(--ink)}
 #map{height:100%}#mapEl{height:100%}
-.pin{background:var(--card);border:2px solid var(--gold);border-radius:99px;padding:2px 7px;font-weight:700;white-space:nowrap;transform:translate(-50%,-100%);width:max-content;color:var(--ink)}
-nav{display:flex;border-top:1px solid var(--line);background:var(--card);padding-bottom:env(safe-area-inset-bottom,0)}
-nav button{flex:1;padding:12px;border:0;background:none;color:var(--mut);font-size:14px;border-radius:0}nav button.on{color:var(--acc);font-weight:700}
-button{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 12px}
-.go{background:var(--acc);color:#fff;border:0;font-weight:700}
-.fab{position:fixed;right:16px;bottom:calc(70px + env(safe-area-inset-bottom,0px));z-index:900;border-radius:99px;padding:14px 18px;box-shadow:0 4px 14px #0004}
-.ov{position:fixed;inset:0;background:#0007;z-index:2000;display:flex;align-items:flex-end;justify-content:center}.ov[hidden]{display:none}
-.sheet{background:var(--bg);width:100%;max-width:560px;max-height:92%;overflow:auto;border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px))}
-label{display:block;margin:10px 0 3px;font-weight:600;font-size:13px}
-input[type=text],input[type=email],input[type=password],textarea{width:100%;padding:9px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit}
-.stars button{font-size:28px;padding:0 4px;border:0;background:none;color:var(--line)}.stars button.on{color:var(--gold)}
+.pin{display:flex;align-items:center;gap:3px;background:var(--card);border:2.5px solid var(--a1);border-radius:99px;padding:1px 9px 1px 4px;font:700 14px Fredoka;white-space:nowrap;transform:translate(-50%,-100%);width:max-content;color:var(--ink);box-shadow:var(--sh)}
+nav{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:900;display:flex;align-items:center;gap:6px;background:var(--card);border-radius:99px;padding:6px;box-shadow:0 8px 28px #0003}
+nav[hidden]{display:none}
+nav .t{border:0;background:none;color:var(--mut);font:600 14px Fredoka;padding:10px 20px;border-radius:99px}nav .t.on{background:var(--line);color:var(--ink)}
+nav .plus{width:58px;height:58px;border-radius:50%;border:0;background:linear-gradient(135deg,var(--a1),var(--a2));color:#fff;font-size:32px;line-height:1;margin:-18px 4px;box-shadow:0 6px 16px #ff3d7766;padding:0}
+button{font:inherit;cursor:pointer;border-radius:14px;border:0;background:var(--line);color:var(--ink);padding:10px 14px;font-weight:600}
+.go{background:linear-gradient(135deg,var(--a1),var(--a2));color:#fff;font-weight:700;font-family:Fredoka;font-size:16px}
+.ov{position:fixed;inset:0;background:#0008;z-index:2000;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(3px)}.ov[hidden]{display:none}
+.sheet{background:var(--bg);width:100%;max-width:560px;max-height:92%;overflow:auto;border-radius:26px 26px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom,0px))}
+.sheet h2{font:700 22px Fredoka;margin:0 0 4px}
+label{display:block;margin:12px 0 4px;font-weight:700;font-size:13px}
+input[type=text],input[type=email],input[type=password],textarea{width:100%;padding:11px 12px;border-radius:14px;border:2px solid var(--line);background:var(--card);color:var(--ink);font:inherit}
+input:focus,textarea:focus{outline:0;border-color:var(--a1)}input[type=range]{width:100%;accent-color:var(--a2)}
+.stars button{font-size:34px;padding:0 3px;background:none;color:var(--line);transition:transform .1s}.stars button.on{color:var(--gold);transform:scale(1.12)}
 .row{display:flex;gap:8px;align-items:center}
-#toast{position:fixed;left:50%;top:60px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:99px;z-index:3000;display:none}
-.zb{position:absolute;right:10px;top:10px;z-index:500;display:flex;flex-direction:column;gap:6px}.zb button{width:36px;height:36px;font-size:20px}
+#toast{position:fixed;left:50%;top:80px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:99px;z-index:3000;display:none;font-weight:600;max-width:90%}
 </style></head><body>
-<header><span>🍗 Dunlop Goujon</span><button id="out" hidden>Sign out</button></header>
+<header><span id="logo"></span><h1>Dunlop Goujon<small>rate it · check in · crush it</small></h1><button id="out" hidden>Sign out</button></header>
 <main>
  <section id="feed"></section>
- <section id="map" hidden><div id="mapEl"></div><div class="zb"><button id="me">◎</button></div></section>
+ <section id="map" hidden><div id="mapEl"></div></section>
 </main>
-<button class="fab go" id="add" hidden>＋ Check in</button>
-<nav><button data-t="feed" class="on">Feed</button><button data-t="map">Map</button></nav>
+<nav id="nav" hidden><button class="t on" data-t="feed">🏠 Feed</button><button class="plus" id="add">＋</button><button class="t" data-t="map">🗺️ Map</button></nav>
 
-<div class="ov" id="auth"><div class="sheet" style="border-radius:18px;margin:auto 12px">
- <b style="font-size:18px">Join Dunlop Goujon 🍗</b>
- <label>Email</label><input type="email" id="em" autocomplete="email">
- <label>Password (6+ chars)</label><input type="password" id="pw" autocomplete="current-password">
- <div id="newbits" hidden><label>Your name</label><input type="text" id="nm"><label>Invite code</label><input type="text" id="code"></div>
- <div class="row" style="margin-top:14px"><button class="go" id="signin" style="flex:1">Sign in</button><button id="signup" style="flex:1">New? Join</button></div>
+<div class="ov" id="auth"><div class="sheet" style="border-radius:26px;margin:auto 12px;text-align:center">
+ <div id="logo2"></div><h2>Join Dunlop Goujon</h2><div class="mut">Rate goujons. Judge your friends.</div>
+ <div style="text-align:left"><label>Email</label><input type="email" id="em" autocomplete="email">
+ <label>Password (6+ characters)</label><input type="password" id="pw" autocomplete="current-password">
+ <div id="newbits" hidden><label>Your name</label><input type="text" id="nm"><label>Invite code</label><input type="text" id="code"></div></div>
+ <div class="row" style="margin-top:16px"><button class="go" id="signin" style="flex:1">Sign in</button><button id="signup" style="flex:1">New? Join</button></div>
 </div></div>
 
 <div class="ov" id="form" hidden><div class="sheet">
- <b style="font-size:18px">New check-in</b>
+ <h2>New check-in</h2>
  <label>Where?</label><input type="text" id="spot" placeholder="Pub / restaurant name">
  <label>Goujons (optional)</label><input type="text" id="dish" placeholder="e.g. Buffalo goujons & garlic mayo">
- <div class="row" style="margin-top:8px"><button id="gps">📍 Use my location</button><button id="pk">🗺️ Pick on map</button></div>
- <div class="mut" id="loc">No location set</div>
+ <div class="row" style="margin-top:10px"><button id="gps">📍 Use my location</button><button id="pk">🗺️ Pick on map</button></div>
+ <div class="mut" id="loc" style="margin-top:4px">No location set</div>
  <label>Overall</label><div class="stars" id="stars"></div>
- <label>Crispiness <span id="v1">3</span></label><input type="range" id="crisp" min="1" max="5" value="3" style="width:100%">
- <label>Sauce <span id="v2">3</span></label><input type="range" id="sauce" min="1" max="5" value="3" style="width:100%">
- <label>Portion <span id="v3">3</span></label><input type="range" id="portion" min="1" max="5" value="3" style="width:100%">
+ <label>Crispiness <span id="v1">3</span></label><input type="range" id="crisp" min="1" max="5" value="3">
+ <label>Sauce <span id="v2">3</span></label><input type="range" id="sauce" min="1" max="5" value="3">
+ <label>Portion <span id="v3">3</span></label><input type="range" id="portion" min="1" max="5" value="3">
  <label>Notes</label><textarea id="note" rows="2"></textarea>
  <label>Photo</label><input type="file" id="photo" accept="image/*">
- <div class="row" style="margin-top:14px"><button id="cancel">Cancel</button><button class="go" id="save" style="flex:1">Post check-in</button></div>
+ <div class="row" style="margin-top:16px"><button id="cancel">Cancel</button><button class="go" id="save" style="flex:1">Post check-in</button></div>
 </div></div>
 <div class="ov" id="spotov" hidden><div class="sheet" id="spotsh"></div></div>
 <div id="toast"></div>
 <script>
-// ===== PASTE YOUR SUPABASE VALUES (Project Settings > API) =====
+// ===== SUPABASE DETAILS =====
 const SUPABASE_URL='https://tvyzhlqwuyetfpondobk.supabase.co', SUPABASE_KEY='sb_publishable_kPQsnqZk7bwwzCLNQN8DSw_X0GiU3jt';
-// ===============================================================
+// ============================
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let me=null,items=[],map,layer,picking=false,stars=0,cur={lat:null,lng:null},fitted=false,timer;
+const goujon=z=>`<svg xmlns="http://www.w3.org/2000/svg" width="${z}" height="${z}" viewBox="0 0 64 64"><g transform="rotate(-32 32 32)"><rect x="4" y="19" width="56" height="26" rx="13" fill="#e8a13a" stroke="#b9691a" stroke-width="2.5"/><path d="M14 25h30" stroke="#f7d27f" stroke-width="3" stroke-linecap="round" opacity=".8"/><g fill="#b9691a"><circle cx="16" cy="36" r="1.8"/><circle cx="26" cy="30" r="1.6"/><circle cx="36" cy="38" r="1.8"/><circle cx="47" cy="31" r="1.6"/><circle cx="52" cy="38" r="1.4"/></g><g fill="#f7d27f"><circle cx="21" cy="39" r="1.5"/><circle cx="31" cy="33" r="1.4"/><circle cx="42" cy="26" r="1.5"/><circle cx="12" cy="31" r="1.4"/></g></g></svg>`;
+$('#logo').innerHTML=goujon(40);$('#logo2').innerHTML=goujon(72);
+{const l=document.createElement('link');l.rel='icon';l.href='data:image/svg+xml,'+encodeURIComponent(goujon(64));document.head.appendChild(l)}
+let me=null,isAdmin=false,items=[],map,layer,picking=false,stars=0,cur={lat:null,lng:null},fitted=false,timer;
 const star=n=>'★'.repeat(n)+'☆'.repeat(5-n);
+const hue=s=>[...String(s)].reduce((h,c)=>(h*31+c.charCodeAt(0))%360,7);
 const toast=t=>{const e=$('#toast');e.textContent=t;e.style.display='block';setTimeout(()=>e.style.display='none',3000)};
-const ago=t=>{const m=(Date.now()-new Date(t))/6e4;return m<1?'now':m<60?Math.floor(m)+'m':m<1440?Math.floor(m/60)+'h':Math.floor(m/1440)+'d'};
+const ago=t=>{const m=(Date.now()-new Date(t))/6e4;return m<1?'just now':m<60?Math.floor(m)+'m ago':m<1440?Math.floor(m/60)+'h ago':Math.floor(m/1440)+'d ago'};
 const photo=p=>sb.storage.from('photos').getPublicUrl(p).data.publicUrl;
-const who=c=>c.user_id===me?'You':(c.profiles&&c.profiles.name)||'A friend';
-function card(c){return `<div class="card">${c.photo_path?`<img loading="lazy" src="${esc(photo(c.photo_path))}" alt="">`:''}<div class="b"><b>${esc(who(c))}</b> <span class="mut">at ${esc(c.spot)} · ${ago(c.created_at)}</span><div><span class="st">${star(c.stars)}</span> ${esc(c.dish||'')}</div><span class="chip">Crisp ${c.crisp}</span><span class="chip">Sauce ${c.sauce}</span><span class="chip">Portion ${c.portion}</span>${c.note?`<div>${esc(c.note)}</div>`:''}</div></div>`}
-function render(){$('#feed').innerHTML=items.length?items.map(card).join(''):'<p class="mut" style="text-align:center;margin-top:60px">No goujons rated yet.<br>Tap “Check in” to post the first one 🍗</p>';if(map)pins()}
+const nameOf=c=>c.user_id===me?'You':(c.profiles&&c.profiles.name)||'A friend';
+function card(c){const n=nameOf(c);return `<div class="card">${c.photo_path?`<img class="ph" loading="lazy" src="${esc(photo(c.photo_path))}" alt="">`:''}<div class="b"><div class="top"><div class="av" style="background:hsl(${hue(c.user_id)} 70% 50%)">${esc(n[0].toUpperCase())}</div><div class="who"><b>${esc(n)}</b><br><span class="mut">${ago(c.created_at)}</span></div><div class="score">${c.stars}<small>/5</small></div></div><span class="spot">📍 ${esc(c.spot)}</span>${c.dish?`<div class="dish">${esc(c.dish)}</div>`:''}<div class="st">${star(c.stars)}</div><div class="meters"><div class="m"><span>Crisp</span><i style="--v:${c.crisp}"></i></div><div class="m"><span>Sauce</span><i style="--v:${c.sauce}"></i></div><div class="m"><span>Portion</span><i style="--v:${c.portion}"></i></div></div>${c.note?`<div class="note">“${esc(c.note)}”</div>`:''}${(c.user_id===me||isAdmin)?`<button class="del" data-del="${c.id}">🗑 Delete</button>`:''}</div></div>`}
+function render(){$('#feed').innerHTML=items.length?items.map(card).join(''):`<div class="empty">${goujon(90)}<br><b>No goujons rated yet</b><br>Tap the ＋ button to post the first one!</div>`;if(map)pins()}
 async function load(){const{data,error}=await sb.from('checkins').select('*,profiles(name)').order('created_at',{ascending:false}).limit(300);if(error)return toast(error.message);items=data;render()}
+document.addEventListener('click',async e=>{const id=e.target.dataset&&e.target.dataset.del;if(!id)return;if(!confirm('Delete this check-in?'))return;
+ const{data,error}=await sb.from('checkins').delete().eq('id',id).select();if(error||!data.length)return toast('Not allowed to delete that');toast('Deleted');$('#spotov').hidden=true;load()});
 function groups(){const g={};items.forEach(c=>{const k=c.spot.toLowerCase();(g[k]=g[k]||{spot:c.spot,lat:c.lat,lng:c.lng,list:[]}).list.push(c)});return Object.values(g)}
-function pins(){layer.clearLayers();groups().forEach(g=>{const a=g.list.reduce((s,c)=>s+c.stars,0)/g.list.length;L.marker([g.lat,g.lng],{icon:L.divIcon({className:'',html:`<div class="pin">🍗 ${a.toFixed(1)}</div>`,iconSize:[0,0]})}).on('click',()=>{$('#spotsh').innerHTML=`<b style="font-size:18px">${esc(g.spot)}</b><div class="mut" style="margin-bottom:10px">${g.list.length} check-in${g.list.length>1?'s':''} · avg ${a.toFixed(1)}★</div>${g.list.map(card).join('')}<button id="cl" style="width:100%">Close</button>`;$('#spotov').hidden=false;$('#cl').onclick=()=>$('#spotov').hidden=true}).addTo(layer)})}
-function initMap(){if(map)return;map=L.map('mapEl',{zoomControl:true}).setView([54,-4],5);
+function pins(){layer.clearLayers();groups().forEach(g=>{const a=g.list.reduce((s,c)=>s+c.stars,0)/g.list.length;L.marker([g.lat,g.lng],{icon:L.divIcon({className:'',html:`<div class="pin">${goujon(26)}${a.toFixed(1)}</div>`,iconSize:[0,0]})}).on('click',()=>{$('#spotsh').innerHTML=`<h2>${esc(g.spot)}</h2><div class="mut" style="margin-bottom:12px">${g.list.length} check-in${g.list.length>1?'s':''} · average ${a.toFixed(1)} ★</div>${g.list.map(card).join('')}<button id="cl" style="width:100%">Close</button>`;$('#spotov').hidden=false;$('#cl').onclick=()=>$('#spotov').hidden=true}).addTo(layer)})}
+function initMap(){if(map)return;map=L.map('mapEl').setView([54,-4],5);
  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(map);layer=L.layerGroup().addTo(map);
- map.on('click',e=>{if(!picking)return;picking=false;cur={lat:e.latlng.lat,lng:e.latlng.lng};setLoc();tab('feed');$('#form').hidden=false});
- $('#me').onclick=()=>map.locate({setView:true,maxZoom:15});pins()}
-function tab(t){$('#feed').hidden=t!=='feed';$('#map').hidden=t!=='map';document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+ map.on('click',e=>{if(!picking)return;picking=false;cur={lat:e.latlng.lat,lng:e.latlng.lng};setLoc();tab('feed');$('#form').hidden=false});pins()}
+function tab(t){$('#feed').hidden=t!=='feed';$('#map').hidden=t!=='map';document.querySelectorAll('nav .t').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
  if(t==='map'){initMap();setTimeout(()=>{map.invalidateSize();const g=groups();if(g.length&&!fitted){fitted=true;map.fitBounds(g.map(x=>[x.lat,x.lng]),{padding:[40,40],maxZoom:15})}},60)}}
-document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>tab(b.dataset.t));
+document.querySelectorAll('nav .t').forEach(b=>b.onclick=()=>tab(b.dataset.t));
 const setLoc=()=>$('#loc').textContent=cur.lat==null?'No location set':`📍 ${cur.lat.toFixed(4)}, ${cur.lng.toFixed(4)}`;
 $('#stars').innerHTML=[1,2,3,4,5].map(i=>`<button data-i="${i}">★</button>`).join('');
 $('#stars').onclick=e=>{const i=+e.target.dataset.i;if(!i)return;stars=i;document.querySelectorAll('#stars button').forEach(b=>b.classList.toggle('on',+b.dataset.i<=i))};
@@ -101,7 +122,7 @@ $('#save').onclick=async()=>{const spot=$('#spot').value.trim();if(!spot||!stars
  $('#save').disabled=true;let photo_path=null;const f=$('#photo').files[0];
  if(f){try{photo_path=`${me}/${Date.now()}.jpg`;const{error}=await sb.storage.from('photos').upload(photo_path,await shrink(f),{contentType:'image/jpeg'});if(error)throw error}catch(e){photo_path=null;toast('Photo failed: '+e.message)}}
  const{error}=await sb.from('checkins').insert({spot,dish:$('#dish').value.trim()||null,stars,crisp:+$('#crisp').value,sauce:+$('#sauce').value,portion:+$('#portion').value,note:$('#note').value.trim()||null,photo_path,lat:cur.lat,lng:cur.lng});
- if(error)toast(error.message);else{$('#form').hidden=true;['spot','dish','note','photo'].forEach(k=>$('#'+k).value='');stars=0;cur={lat:null,lng:null};setLoc();document.querySelectorAll('#stars button').forEach(b=>b.classList.remove('on'));toast('Checked in! 🍗');load()}
+ if(error)toast(error.message);else{$('#form').hidden=true;['spot','dish','note','photo'].forEach(k=>$('#'+k).value='');stars=0;cur={lat:null,lng:null};setLoc();document.querySelectorAll('#stars button').forEach(b=>b.classList.remove('on'));toast('Checked in! 🎉');load()}
  $('#save').disabled=false};
 $('#spotov').onclick=e=>{if(e.target.id==='spotov')$('#spotov').hidden=true};
 // ---- auth ----
@@ -110,7 +131,8 @@ async function enter(user){me=user.id;
  if(!pr){const code=prompt('Almost there! Enter the invite code to join:');if(!code){await sb.auth.signOut();return location.reload()}
   const nm=prompt('Your name (shown to friends):')||'Goujon fan';
   const r=await sb.rpc('join_group',{p_name:nm,p_code:code.trim()});if(r.error){toast(r.error.message);await sb.auth.signOut();return}}
-$('#auth').hidden=true;$('#add').hidden=$('#out').hidden=false;await load();clearInterval(timer);timer=setInterval(load,30000)}
+ try{const{data:ad}=await sb.from('admins').select('id').eq('id',me).maybeSingle();isAdmin=!!ad}catch(e){}
+ $('#auth').hidden=true;$('#nav').hidden=$('#out').hidden=false;await load();clearInterval(timer);timer=setInterval(load,30000)}
 $('#signin').onclick=async()=>{const{data,error}=await sb.auth.signInWithPassword({email:$('#em').value.trim(),password:$('#pw').value});if(error)return toast(error.message);enter(data.user)};
 $('#signup').onclick=async()=>{if($('#newbits').hidden){$('#newbits').hidden=false;return toast('Add your name + invite code')}
  const{data,error}=await sb.auth.signUp({email:$('#em').value.trim(),password:$('#pw').value});if(error)return toast(error.message);

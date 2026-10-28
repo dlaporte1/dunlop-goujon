@@ -27,3 +27,9 @@ begin
 end $$;
 insert into storage.buckets(id,name,public) values('photos','photos',true);
 create policy ph_ins on storage.objects for insert to authenticated with check (bucket_id='photos' and is_member());
+
+-- Admin (run once, later): lets the first member delete anyone's check-ins
+create table if not exists admins(id uuid primary key);
+alter table admins enable row level security;
+create policy a_sel on admins for select using (id=auth.uid());
+create policy c_del_admin on checkins for delete using (exists(select 1 from admins where id=auth.uid()));
