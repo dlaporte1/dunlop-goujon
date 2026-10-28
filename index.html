@@ -1,0 +1,117 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dunlop Goujon</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+:root{--bg:#fff8ec;--card:#fff;--ink:#2b1d0e;--mut:#8a7560;--gold:#e8a317;--acc:#b5470f;--line:#f0e2c8}
+@media(prefers-color-scheme:dark){:root{--bg:#1b140c;--card:#2a2016;--ink:#f6ead6;--mut:#b09a80;--line:#3d2f20}}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,sans-serif;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0)}
+header{padding:12px 16px;font-weight:800;font-size:20px;color:var(--acc);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+header button{font-size:12px;padding:4px 8px}
+main{flex:1;overflow:auto;position:relative}
+#feed{padding:12px;max-width:640px;margin:auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:12px;overflow:hidden}
+.card img{width:100%;max-height:300px;object-fit:cover;display:block}
+.card .b{padding:10px 12px}.mut{color:var(--mut);font-size:13px}
+.st{color:var(--gold);letter-spacing:1px}.chip{display:inline-block;background:var(--line);border-radius:99px;padding:1px 8px;font-size:12px;margin:4px 4px 0 0}
+#map{height:100%}#mapEl{height:100%}
+.pin{background:var(--card);border:2px solid var(--gold);border-radius:99px;padding:2px 7px;font-weight:700;white-space:nowrap;transform:translate(-50%,-100%);width:max-content;color:var(--ink)}
+nav{display:flex;border-top:1px solid var(--line);background:var(--card);padding-bottom:env(safe-area-inset-bottom,0)}
+nav button{flex:1;padding:12px;border:0;background:none;color:var(--mut);font-size:14px;border-radius:0}nav button.on{color:var(--acc);font-weight:700}
+button{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 12px}
+.go{background:var(--acc);color:#fff;border:0;font-weight:700}
+.fab{position:fixed;right:16px;bottom:calc(70px + env(safe-area-inset-bottom,0px));z-index:900;border-radius:99px;padding:14px 18px;box-shadow:0 4px 14px #0004}
+.ov{position:fixed;inset:0;background:#0007;z-index:2000;display:flex;align-items:flex-end;justify-content:center}.ov[hidden]{display:none}
+.sheet{background:var(--bg);width:100%;max-width:560px;max-height:92%;overflow:auto;border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px))}
+label{display:block;margin:10px 0 3px;font-weight:600;font-size:13px}
+input[type=text],input[type=email],input[type=password],textarea{width:100%;padding:9px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit}
+.stars button{font-size:28px;padding:0 4px;border:0;background:none;color:var(--line)}.stars button.on{color:var(--gold)}
+.row{display:flex;gap:8px;align-items:center}
+#toast{position:fixed;left:50%;top:60px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:99px;z-index:3000;display:none}
+.zb{position:absolute;right:10px;top:10px;z-index:500;display:flex;flex-direction:column;gap:6px}.zb button{width:36px;height:36px;font-size:20px}
+</style></head><body>
+<header><span>🍗 Dunlop Goujon</span><button id="out" hidden>Sign out</button></header>
+<main>
+ <section id="feed"></section>
+ <section id="map" hidden><div id="mapEl"></div><div class="zb"><button id="me">◎</button></div></section>
+</main>
+<button class="fab go" id="add" hidden>＋ Check in</button>
+<nav><button data-t="feed" class="on">Feed</button><button data-t="map">Map</button></nav>
+
+<div class="ov" id="auth"><div class="sheet" style="border-radius:18px;margin:auto 12px">
+ <b style="font-size:18px">Join Dunlop Goujon 🍗</b>
+ <label>Email</label><input type="email" id="em" autocomplete="email">
+ <label>Password (6+ chars)</label><input type="password" id="pw" autocomplete="current-password">
+ <div id="newbits" hidden><label>Your name</label><input type="text" id="nm"><label>Invite code</label><input type="text" id="code"></div>
+ <div class="row" style="margin-top:14px"><button class="go" id="signin" style="flex:1">Sign in</button><button id="signup" style="flex:1">New? Join</button></div>
+</div></div>
+
+<div class="ov" id="form" hidden><div class="sheet">
+ <b style="font-size:18px">New check-in</b>
+ <label>Where?</label><input type="text" id="spot" placeholder="Pub / restaurant name">
+ <label>Goujons (optional)</label><input type="text" id="dish" placeholder="e.g. Buffalo goujons & garlic mayo">
+ <div class="row" style="margin-top:8px"><button id="gps">📍 Use my location</button><button id="pk">🗺️ Pick on map</button></div>
+ <div class="mut" id="loc">No location set</div>
+ <label>Overall</label><div class="stars" id="stars"></div>
+ <label>Crispiness <span id="v1">3</span></label><input type="range" id="crisp" min="1" max="5" value="3" style="width:100%">
+ <label>Sauce <span id="v2">3</span></label><input type="range" id="sauce" min="1" max="5" value="3" style="width:100%">
+ <label>Portion <span id="v3">3</span></label><input type="range" id="portion" min="1" max="5" value="3" style="width:100%">
+ <label>Notes</label><textarea id="note" rows="2"></textarea>
+ <label>Photo</label><input type="file" id="photo" accept="image/*">
+ <div class="row" style="margin-top:14px"><button id="cancel">Cancel</button><button class="go" id="save" style="flex:1">Post check-in</button></div>
+</div></div>
+<div class="ov" id="spotov" hidden><div class="sheet" id="spotsh"></div></div>
+<div id="toast"></div>
+<script>
+// ===== PASTE YOUR SUPABASE VALUES (Project Settings > API) =====
+const SUPABASE_URL='https://YOUR-PROJECT.supabase.co', SUPABASE_KEY='YOUR-ANON-PUBLIC-KEY';
+// ===============================================================
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let me=null,items=[],map,layer,picking=false,stars=0,cur={lat:null,lng:null},fitted=false,timer;
+const star=n=>'★'.repeat(n)+'☆'.repeat(5-n);
+const toast=t=>{const e=$('#toast');e.textContent=t;e.style.display='block';setTimeout(()=>e.style.display='none',3000)};
+const ago=t=>{const m=(Date.now()-new Date(t))/6e4;return m<1?'now':m<60?Math.floor(m)+'m':m<1440?Math.floor(m/60)+'h':Math.floor(m/1440)+'d'};
+const photo=p=>sb.storage.from('photos').getPublicUrl(p).data.publicUrl;
+const who=c=>c.user_id===me?'You':(c.profiles&&c.profiles.name)||'A friend';
+function card(c){return `<div class="card">${c.photo_path?`<img loading="lazy" src="${esc(photo(c.photo_path))}" alt="">`:''}<div class="b"><b>${esc(who(c))}</b> <span class="mut">at ${esc(c.spot)} · ${ago(c.created_at)}</span><div><span class="st">${star(c.stars)}</span> ${esc(c.dish||'')}</div><span class="chip">Crisp ${c.crisp}</span><span class="chip">Sauce ${c.sauce}</span><span class="chip">Portion ${c.portion}</span>${c.note?`<div>${esc(c.note)}</div>`:''}</div></div>`}
+function render(){$('#feed').innerHTML=items.length?items.map(card).join(''):'<p class="mut" style="text-align:center;margin-top:60px">No goujons rated yet.<br>Tap “Check in” to post the first one 🍗</p>';if(map)pins()}
+async function load(){const{data,error}=await sb.from('checkins').select('*,profiles(name)').order('created_at',{ascending:false}).limit(300);if(error)return toast(error.message);items=data;render()}
+function groups(){const g={};items.forEach(c=>{const k=c.spot.toLowerCase();(g[k]=g[k]||{spot:c.spot,lat:c.lat,lng:c.lng,list:[]}).list.push(c)});return Object.values(g)}
+function pins(){layer.clearLayers();groups().forEach(g=>{const a=g.list.reduce((s,c)=>s+c.stars,0)/g.list.length;L.marker([g.lat,g.lng],{icon:L.divIcon({className:'',html:`<div class="pin">🍗 ${a.toFixed(1)}</div>`,iconSize:[0,0]})}).on('click',()=>{$('#spotsh').innerHTML=`<b style="font-size:18px">${esc(g.spot)}</b><div class="mut" style="margin-bottom:10px">${g.list.length} check-in${g.list.length>1?'s':''} · avg ${a.toFixed(1)}★</div>${g.list.map(card).join('')}<button id="cl" style="width:100%">Close</button>`;$('#spotov').hidden=false;$('#cl').onclick=()=>$('#spotov').hidden=true}).addTo(layer)})}
+function initMap(){if(map)return;map=L.map('mapEl',{zoomControl:true}).setView([54,-4],5);
+ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(map);layer=L.layerGroup().addTo(map);
+ map.on('click',e=>{if(!picking)return;picking=false;cur={lat:e.latlng.lat,lng:e.latlng.lng};setLoc();tab('feed');$('#form').hidden=false});
+ $('#me').onclick=()=>map.locate({setView:true,maxZoom:15});pins()}
+function tab(t){$('#feed').hidden=t!=='feed';$('#map').hidden=t!=='map';document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+ if(t==='map'){initMap();setTimeout(()=>{map.invalidateSize();const g=groups();if(g.length&&!fitted){fitted=true;map.fitBounds(g.map(x=>[x.lat,x.lng]),{padding:[40,40],maxZoom:15})}},60)}}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>tab(b.dataset.t));
+const setLoc=()=>$('#loc').textContent=cur.lat==null?'No location set':`📍 ${cur.lat.toFixed(4)}, ${cur.lng.toFixed(4)}`;
+$('#stars').innerHTML=[1,2,3,4,5].map(i=>`<button data-i="${i}">★</button>`).join('');
+$('#stars').onclick=e=>{const i=+e.target.dataset.i;if(!i)return;stars=i;document.querySelectorAll('#stars button').forEach(b=>b.classList.toggle('on',+b.dataset.i<=i))};
+['crisp','sauce','portion'].forEach((k,i)=>$('#'+k).oninput=e=>$('#v'+(i+1)).textContent=e.target.value);
+$('#add').onclick=()=>$('#form').hidden=false;$('#cancel').onclick=()=>$('#form').hidden=true;
+$('#pk').onclick=()=>{picking=true;$('#form').hidden=true;tab('map');toast('Tap the map where you ate')};
+$('#gps').onclick=()=>navigator.geolocation?navigator.geolocation.getCurrentPosition(p=>{cur={lat:p.coords.latitude,lng:p.coords.longitude};setLoc()},()=>toast('Location blocked — use Pick on map'),{enableHighAccuracy:true,timeout:10000}):toast('No GPS — use Pick on map');
+async function shrink(f){const b=await createImageBitmap(f),s=Math.min(1,900/Math.max(b.width,b.height)),c=document.createElement('canvas');c.width=b.width*s;c.height=b.height*s;c.getContext('2d').drawImage(b,0,0,c.width,c.height);return new Promise(r=>c.toBlob(r,'image/jpeg',.8))}
+$('#save').onclick=async()=>{const spot=$('#spot').value.trim();if(!spot||!stars||cur.lat==null)return toast('Need a place, stars and a location');
+ $('#save').disabled=true;let photo_path=null;const f=$('#photo').files[0];
+ if(f){try{photo_path=`${me}/${Date.now()}.jpg`;const{error}=await sb.storage.from('photos').upload(photo_path,await shrink(f),{contentType:'image/jpeg'});if(error)throw error}catch(e){photo_path=null;toast('Photo failed: '+e.message)}}
+ const{error}=await sb.from('checkins').insert({spot,dish:$('#dish').value.trim()||null,stars,crisp:+$('#crisp').value,sauce:+$('#sauce').value,portion:+$('#portion').value,note:$('#note').value.trim()||null,photo_path,lat:cur.lat,lng:cur.lng});
+ if(error)toast(error.message);else{$('#form').hidden=true;['spot','dish','note','photo'].forEach(k=>$('#'+k).value='');stars=0;cur={lat:null,lng:null};setLoc();document.querySelectorAll('#stars button').forEach(b=>b.classList.remove('on'));toast('Checked in! 🍗');load()}
+ $('#save').disabled=false};
+$('#spotov').onclick=e=>{if(e.target.id==='spotov')$('#spotov').hidden=true};
+// ---- auth ----
+async function enter(user){me=user.id;$('#auth').hidden=true;$('#add').hidden=$('#out').hidden=false;await load();clearInterval(timer);timer=setInterval(load,30000)}
+$('#signin').onclick=async()=>{const{data,error}=await sb.auth.signInWithPassword({email:$('#em').value.trim(),password:$('#pw').value});if(error)return toast(error.message);enter(data.user)};
+$('#signup').onclick=async()=>{if($('#newbits').hidden){$('#newbits').hidden=false;return toast('Add your name + invite code')}
+ const{data,error}=await sb.auth.signUp({email:$('#em').value.trim(),password:$('#pw').value});if(error)return toast(error.message);
+ if(!data.session)return toast('Check your email to confirm, then sign in');
+ const r=await sb.rpc('join_group',{p_name:$('#nm').value.trim()||'Goujon fan',p_code:$('#code').value.trim()});if(r.error)return toast(r.error.message);enter(data.user)};
+$('#out').onclick=async()=>{await sb.auth.signOut();location.reload()};
+render();
+sb.auth.getSession().then(({data})=>{if(data.session)enter(data.session.user)});
+</script></body></html>
