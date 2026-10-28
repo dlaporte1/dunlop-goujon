@@ -111,30 +111,34 @@ function card(c){const n=nameOf(c);return `<div class="card">${c.photo_path?`<im
 function render(){$('#feed').innerHTML=items.length?items.map(card).join('')+foot():`<div class="empty">${goujon(90)}<br><b>No goujons rated yet</b><br>Tap the ＋ button to post the first one.<br><small>Mr Thandi would have these in stock.</small></div>`;if(map)pins()}
 async function load(){const{data,error}=await sb.from('checkins').select('*,profiles(name)').order('created_at',{ascending:false}).limit(300);if(error)return toast(error.message);items=data;render()}
 document.addEventListener('click',async e=>{const id=e.target.dataset&&e.target.dataset.del;if(!id)return;if(!confirm('Delete this check-in?'))return;
- const{data,error}=await sb.from('checkins').delete().eq('id',id).select();if(error||!data.length)return toast('Not allowed to delete that');toast('Deleted');$('#spotov').hidden=true;load()});
+ const{data,error}=await sb.from('checkins').delete().eq('id',id).select();if(error||!data.length)return toast('Not allowed to delete that');toast('Deleted');closeOv('spotov','spot');load()});
 function groups(){const g={};items.forEach(c=>{const k=c.spot.toLowerCase();(g[k]=g[k]||{spot:c.spot,lat:c.lat,lng:c.lng,list:[]}).list.push(c)});return Object.values(g)}
-function pins(){layer.clearLayers();groups().forEach(g=>{const a=g.list.reduce((s,c)=>s+c.stars,0)/g.list.length;L.marker([g.lat,g.lng],{icon:L.divIcon({className:'',html:`<div class="pin">${goujon(26)}${a.toFixed(1)}</div>`,iconSize:[0,0]})}).on('click',()=>{$('#spotsh').innerHTML=`<h2>${esc(g.spot)}</h2><div class="mut" style="margin-bottom:12px">${g.list.length} check-in${g.list.length>1?'s':''} · average ${a.toFixed(1)} ★</div>${g.list.map(card).join('')}<button id="cl" style="width:100%">Close</button>`;$('#spotov').hidden=false;$('#cl').onclick=()=>$('#spotov').hidden=true}).addTo(layer)})}
+function pins(){layer.clearLayers();groups().forEach(g=>{const a=g.list.reduce((s,c)=>s+c.stars,0)/g.list.length;L.marker([g.lat,g.lng],{icon:L.divIcon({className:'',html:`<div class="pin">${goujon(26)}${a.toFixed(1)}</div>`,iconSize:[0,0]})}).on('click',()=>{$('#spotsh').innerHTML=`<h2>${esc(g.spot)}</h2><div class="mut" style="margin-bottom:12px">${g.list.length} check-in${g.list.length>1?'s':''} · average ${a.toFixed(1)} ★</div>${g.list.map(card).join('')}<button id="cl" style="width:100%">Close</button>`;openOv('spotov','spot');$('#cl').onclick=()=>closeOv('spotov','spot')}).addTo(layer)})}
 function initMap(){if(map)return;map=L.map('mapEl').setView([54,-4],5);
  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(map);layer=L.layerGroup().addTo(map);
- map.on('click',e=>{if(!picking)return;picking=false;cur={lat:e.latlng.lat,lng:e.latlng.lng};setLoc();tab('feed');$('#form').hidden=false});pins()}
+ map.on('click',e=>{if(!picking)return;picking=false;cur={lat:e.latlng.lat,lng:e.latlng.lng};setLoc();tab('feed');$('#form').hidden=false;history.replaceState({v:'form'},'')});pins()}
 function tab(t){$('#feed').hidden=t!=='feed';$('#map').hidden=t!=='map';document.querySelectorAll('nav .t').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
  if(t==='map'){initMap();setTimeout(()=>{map.invalidateSize();const g=groups();if(g.length&&!fitted){fitted=true;map.fitBounds(g.map(x=>[x.lat,x.lng]),{padding:[40,40],maxZoom:15})}},60)}}
-document.querySelectorAll('nav .t').forEach(b=>b.onclick=()=>tab(b.dataset.t));
+document.querySelectorAll('nav .t').forEach(b=>b.onclick=()=>{const t=b.dataset.t;if(t==='map'&&$('#map').hidden)history.pushState({v:'map'},'');if(t==='feed'&&!$('#map').hidden&&st()==='map')return history.back();tab(t)});
 const setLoc=()=>$('#loc').textContent=cur.lat==null?'No location set':`📍 ${cur.lat.toFixed(4)}, ${cur.lng.toFixed(4)}`;
 $('#stars').innerHTML=[1,2,3,4,5].map(i=>`<button data-i="${i}">★</button>`).join('');
 $('#stars').onclick=e=>{const i=+e.target.dataset.i;if(!i)return;stars=i;document.querySelectorAll('#stars button').forEach(b=>b.classList.toggle('on',+b.dataset.i<=i))};
 ['crisp','sauce','portion'].forEach((k,i)=>$('#'+k).oninput=e=>$('#v'+(i+1)).textContent=e.target.value);
-$('#add').onclick=()=>$('#form').hidden=false;$('#cancel').onclick=()=>$('#form').hidden=true;
-$('#pk').onclick=()=>{picking=true;$('#form').hidden=true;tab('map');toast('Tap the map where you ate')};
+const st=()=>history.state&&history.state.v;
+function openOv(id,v){if(!$('#'+id).hidden)return;$('#'+id).hidden=false;history.pushState({v},'')}
+function closeOv(id,v){if($('#'+id).hidden)return;st()===v?history.back():$('#'+id).hidden=true}
+window.addEventListener('popstate',()=>{picking=false;if(!$('#spotov').hidden)return void($('#spotov').hidden=true);if(!$('#form').hidden)return void($('#form').hidden=true);if(!$('#map').hidden)tab('feed')});
+$('#add').onclick=()=>openOv('form','form');$('#cancel').onclick=()=>closeOv('form','form');
+$('#pk').onclick=()=>{picking=true;$('#form').hidden=true;history.replaceState({v:'map'},'');tab('map');toast('Tap the map where you ate')};
 $('#gps').onclick=()=>navigator.geolocation?navigator.geolocation.getCurrentPosition(p=>{cur={lat:p.coords.latitude,lng:p.coords.longitude};setLoc()},()=>toast('Location blocked — use Pick on map'),{enableHighAccuracy:true,timeout:10000}):toast('No GPS — use Pick on map');
 async function shrink(f){const b=await createImageBitmap(f),s=Math.min(1,900/Math.max(b.width,b.height)),c=document.createElement('canvas');c.width=b.width*s;c.height=b.height*s;c.getContext('2d').drawImage(b,0,0,c.width,c.height);return new Promise(r=>c.toBlob(r,'image/jpeg',.8))}
 $('#save').onclick=async()=>{const spot=$('#spot').value.trim();if(!spot||!stars||cur.lat==null)return toast('Need a place, stars and a location');
  $('#save').disabled=true;let photo_path=null;const f=$('#photo').files[0];
  if(f){try{photo_path=`${me}/${Date.now()}.jpg`;const{error}=await sb.storage.from('photos').upload(photo_path,await shrink(f),{contentType:'image/jpeg'});if(error)throw error}catch(e){photo_path=null;toast('Photo failed: '+e.message)}}
  const{error}=await sb.from('checkins').insert({spot,dish:$('#dish').value.trim()||null,stars,crisp:+$('#crisp').value,sauce:+$('#sauce').value,portion:+$('#portion').value,note:$('#note').value.trim()||null,photo_path,lat:cur.lat,lng:cur.lng});
- if(error)toast(error.message);else{$('#form').hidden=true;['spot','dish','note','photo'].forEach(k=>$('#'+k).value='');stars=0;cur={lat:null,lng:null};setLoc();document.querySelectorAll('#stars button').forEach(b=>b.classList.remove('on'));toast(pick(['Checked in! 🎉','Logged. Hope Sam remembered the gravy','Another one for Dunlop Avenue','Mr Thandi would be proud']));load()}
+ if(error)toast(error.message);else{closeOv('form','form');['spot','dish','note','photo'].forEach(k=>$('#'+k).value='');stars=0;cur={lat:null,lng:null};setLoc();document.querySelectorAll('#stars button').forEach(b=>b.classList.remove('on'));toast(pick(['Checked in! 🎉','Logged. Hope Sam remembered the gravy','Another one for Dunlop Avenue','Mr Thandi would be proud']));load()}
  $('#save').disabled=false};
-$('#spotov').onclick=e=>{if(e.target.id==='spotov')$('#spotov').hidden=true};
+$('#spotov').onclick=e=>{if(e.target.id==='spotov')closeOv('spotov','spot')};
 // ---- auth ----
 async function enter(user){me=user.id;
  const{data:pr}=await sb.from('profiles').select('id').eq('id',me).maybeSingle();
