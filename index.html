@@ -50,7 +50,7 @@ input:focus,textarea:focus{outline:0;border-color:var(--a1)}input[type=range]{wi
 .row{display:flex;gap:8px;align-items:center}
 #toast{position:fixed;left:50%;top:80px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:99px;z-index:3000;display:none;font-weight:600;max-width:90%}
 </style></head><body>
-<header><span id="logo"></span><h1>Dunlop Goujon<small>rate it · check in · crush it</small></h1><button id="out" hidden>Sign out</button></header>
+<header><span id="logo"></span><h1>Dunlop Goujon<small>dip it, eat it, rate it</small></h1><button id="out" hidden>Sign out</button></header>
 <main>
  <section id="feed"></section>
  <section id="map" hidden><div id="mapEl"></div></section>
@@ -63,7 +63,6 @@ input:focus,textarea:focus{outline:0;border-color:var(--a1)}input[type=range]{wi
  <label>Password (6+ characters)</label><input type="password" id="pw" autocomplete="current-password">
  <div id="newbits" hidden><label>Your name</label><input type="text" id="nm"><label>Invite code</label><input type="text" id="code"></div></div>
  <div class="row" style="margin-top:16px"><button class="go" id="signin" style="flex:1">Sign in</button><button id="signup" style="flex:1">New? Join</button></div>
- <button id="forgot" style="background:none;margin-top:8px;font-size:13px;color:var(--mut)">Forgot password?</button>
 </div></div>
 
 <div class="ov" id="form" hidden><div class="sheet">
@@ -80,9 +79,6 @@ input:focus,textarea:focus{outline:0;border-color:var(--a1)}input[type=range]{wi
  <label>Photo</label><input type="file" id="photo" accept="image/*">
  <div class="row" style="margin-top:16px"><button id="cancel">Cancel</button><button class="go" id="save" style="flex:1">Post check-in</button></div>
 </div></div>
-<div class="ov" id="reset" style="z-index:2500" hidden><div class="sheet" style="border-radius:26px;margin:auto 12px">
- <h2>Choose a new password</h2><label>New password (6+ characters)</label><input type="password" id="np" autocomplete="new-password">
- <button class="go" id="setpw" style="width:100%;margin-top:16px">Save new password</button></div></div>
 <div class="ov" id="spotov" hidden><div class="sheet" id="spotsh"></div></div>
 <div id="toast"></div>
 <script>
@@ -91,7 +87,7 @@ const SUPABASE_URL='https://tvyzhlqwuyetfpondobk.supabase.co', SUPABASE_KEY='sb_
 // ============================
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const goujon=z=>`<svg xmlns="http://www.w3.org/2000/svg" width="${z}" height="${z}" viewBox="0 0 64 64"><g transform="rotate(-32 32 32)"><rect x="4" y="19" width="56" height="26" rx="13" fill="#e8a13a" stroke="#b9691a" stroke-width="2.5"/><path d="M14 25h30" stroke="#f7d27f" stroke-width="3" stroke-linecap="round" opacity=".8"/><g fill="#b9691a"><circle cx="16" cy="36" r="1.8"/><circle cx="26" cy="30" r="1.6"/><circle cx="36" cy="38" r="1.8"/><circle cx="47" cy="31" r="1.6"/><circle cx="52" cy="38" r="1.4"/></g><g fill="#f7d27f"><circle cx="21" cy="39" r="1.5"/><circle cx="31" cy="33" r="1.4"/><circle cx="42" cy="26" r="1.5"/><circle cx="12" cy="31" r="1.4"/></g></g></svg>`;
+const goujon=z=>`<svg xmlns="http://www.w3.org/2000/svg" width="${z}" height="${z}" viewBox="0 0 64 64"><g transform="rotate(-28 32 32)"><path d="M6 36C2 29 7 22 14 23C15 16 24 14 28 19C32 12 42 12 46 18C52 15 60 20 58 28C63 33 59 42 52 43C50 50 41 51 37 46C32 52 23 52 20 47C14 49 8 43 6 36Z" fill="#e0902f" stroke="#9a4f14" stroke-width="2.4" stroke-linejoin="round"/><path d="M13 31C14 26 20 24 25 26C29 22 36 22 40 26C45 23 52 26 51 31C48 33 44 31 40 32C36 29 30 30 26 33C22 31 17 33 13 31Z" fill="#f4bf5d" opacity=".85"/><g fill="#9a4f14"><circle cx="14" cy="38" r="1.7"/><circle cx="23" cy="41" r="1.5"/><circle cx="31" cy="37" r="1.8"/><circle cx="40" cy="41" r="1.5"/><circle cx="49" cy="37" r="1.7"/><circle cx="27" cy="27" r="1.3"/><circle cx="44" cy="28" r="1.3"/></g><g fill="#fbe0a0"><circle cx="19" cy="35" r="1.3"/><circle cx="35" cy="34" r="1.3"/><circle cx="45" cy="34" r="1.2"/><circle cx="30" cy="45" r="1.2"/></g></g></svg>`;
 $('#logo').innerHTML=goujon(40);$('#logo2').innerHTML=goujon(72);
 {const l=document.createElement('link');l.rel='icon';l.href='data:image/svg+xml,'+encodeURIComponent(goujon(64));document.head.appendChild(l)}
 let me=null,isAdmin=false,items=[],map,layer,picking=false,stars=0,cur={lat:null,lng:null},fitted=false,timer;
@@ -142,10 +138,6 @@ $('#signup').onclick=async()=>{if($('#newbits').hidden){$('#newbits').hidden=fal
  const{data,error}=await sb.auth.signUp({email:$('#em').value.trim(),password:$('#pw').value});if(error)return toast(error.message);
  if(!data.session)return toast('Check your email to confirm, then sign in');
  const r=await sb.rpc('join_group',{p_name:$('#nm').value.trim()||'Goujon fan',p_code:$('#code').value.trim()});if(r.error)return toast(r.error.message);enter(data.user)};
-$('#forgot').onclick=async()=>{const em=$('#em').value.trim();if(!em)return toast('Type your email above first');
- const{error}=await sb.auth.resetPasswordForEmail(em,{redirectTo:location.origin+location.pathname});toast(error?error.message:'If that email is registered, a reset link is on its way')};
-sb.auth.onAuthStateChange(ev=>{if(ev==='PASSWORD_RECOVERY')$('#reset').hidden=false});
-$('#setpw').onclick=async()=>{const{error}=await sb.auth.updateUser({password:$('#np').value});if(error)return toast(error.message);$('#reset').hidden=true;history.replaceState(null,'',location.pathname);toast('Password updated! 🎉')};
 $('#out').onclick=async()=>{await sb.auth.signOut();location.reload()};
 render();
 sb.auth.getSession().then(({data})=>{if(data.session)enter(data.session.user)});
