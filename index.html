@@ -49,6 +49,7 @@ input:focus,textarea:focus{outline:0;border-color:var(--a1)}input[type=range]{wi
 .stars button{font-size:34px;padding:0 3px;background:none;color:var(--line);transition:transform .1s}.stars button.on{color:var(--gold);transform:scale(1.12)}
 .row{display:flex;gap:8px;align-items:center}
 #toast{position:fixed;left:50%;top:80px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:99px;z-index:3000;display:none;font-weight:600;max-width:90%}
+.seg{display:flex;background:var(--line);border-radius:99px;padding:4px;margin:16px 0 0}.seg button{flex:1;background:none;border-radius:99px;font-family:Fredoka;font-size:15px}.seg button.on{background:var(--card);box-shadow:var(--sh)}
 </style></head><body>
 <header><span id="logo"></span><h1>Dunlop Goujon<small>dip it, eat it, rate it</small></h1><button id="out" hidden>Sign out</button></header>
 <main>
@@ -59,10 +60,11 @@ input:focus,textarea:focus{outline:0;border-color:var(--a1)}input[type=range]{wi
 
 <div class="ov" id="auth"><div class="sheet" style="border-radius:26px;margin:auto 12px;text-align:center">
  <div id="logo2"></div><h2>Join Dunlop Goujon</h2><div class="mut">Rate goujons. Judge your friends.</div>
+ <div class="seg"><button id="tabin" class="on">Sign in</button><button id="tabup">New? Join</button></div>
  <div style="text-align:left"><label>Email</label><input type="email" id="em" autocomplete="email">
  <label>Password (6+ characters)</label><input type="password" id="pw" autocomplete="current-password">
  <div id="newbits" hidden><label>Your name</label><input type="text" id="nm"><label>Invite code</label><input type="text" id="code"></div></div>
- <div class="row" style="margin-top:16px"><button class="go" id="signin" style="flex:1">Sign in</button><button id="signup" style="flex:1">New? Join</button></div>
+ <button class="go" id="go" style="width:100%;margin-top:16px">Sign in</button>
 </div></div>
 
 <div class="ov" id="form" hidden><div class="sheet">
@@ -133,11 +135,18 @@ async function enter(user){me=user.id;
   const r=await sb.rpc('join_group',{p_name:nm,p_code:code.trim()});if(r.error){toast(r.error.message);await sb.auth.signOut();return}}
  try{const{data:ad}=await sb.from('admins').select('id').eq('id',me).maybeSingle();isAdmin=!!ad}catch(e){}
  $('#auth').hidden=true;$('#nav').hidden=$('#out').hidden=false;await load();clearInterval(timer);timer=setInterval(load,30000)}
-$('#signin').onclick=async()=>{const{data,error}=await sb.auth.signInWithPassword({email:$('#em').value.trim(),password:$('#pw').value});if(error)return toast(error.message);enter(data.user)};
-$('#signup').onclick=async()=>{if($('#newbits').hidden){$('#newbits').hidden=false;return toast('Add your name + invite code')}
- const{data,error}=await sb.auth.signUp({email:$('#em').value.trim(),password:$('#pw').value});if(error)return toast(error.message);
+let mode='in';
+function setMode(m){mode=m;$('#newbits').hidden=m==='in';$('#go').textContent=m==='in'?'Sign in':'Join the crew 🍗';$('#tabin').classList.toggle('on',m==='in');$('#tabup').classList.toggle('on',m==='up');$('#pw').autocomplete=m==='in'?'current-password':'new-password'}
+$('#tabin').onclick=()=>setMode('in');$('#tabup').onclick=()=>setMode('up');
+$('#go').onclick=async()=>{const email=$('#em').value.trim(),password=$('#pw').value;if(!email||!password)return toast('Enter your email and password');
+ if(mode==='in'){const{data,error}=await sb.auth.signInWithPassword({email,password});
+  if(error)return toast(error.message.includes('Invalid login')?'Wrong email or password. First time here? Tap “New? Join” above.':error.message);return enter(data.user)}
+ const name=$('#nm').value.trim(),code=$('#code').value.trim();if(!name||!code)return toast('Add your name and the invite code');
+ const{data,error}=await sb.auth.signUp({email,password});
+ if(error)return toast(error.message.includes('already')?'That email already has an account. Tap “Sign in” above.':error.message);
  if(!data.session)return toast('Check your email to confirm, then sign in');
- const r=await sb.rpc('join_group',{p_name:$('#nm').value.trim()||'Goujon fan',p_code:$('#code').value.trim()});if(r.error)return toast(r.error.message);enter(data.user)};
+ const r=await sb.rpc('join_group',{p_name:name,p_code:code});if(r.error)return toast(r.error.message);enter(data.user)};
+['em','pw','nm','code'].forEach(id=>$('#'+id).addEventListener('keydown',e=>{if(e.key==='Enter')$('#go').click()}));
 $('#out').onclick=async()=>{await sb.auth.signOut();location.reload()};
 render();
 sb.auth.getSession().then(({data})=>{if(data.session)enter(data.session.user)});
