@@ -33,3 +33,6 @@ create table if not exists admins(id uuid primary key);
 alter table admins enable row level security;
 create policy a_sel on admins for select using (id=auth.uid());
 create policy c_del_admin on checkins for delete using (exists(select 1 from admins where id=auth.uid()));
+
+-- Lets you delete a user (and their check-ins) from the Supabase dashboard
+alter table checkins drop constraint checkins_user_id_fkey, add constraint checkins_user_id_fkey foreign key (user_id) references profiles(id) on delete cascade;
